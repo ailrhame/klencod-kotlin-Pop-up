@@ -21,9 +21,12 @@ import android.widget.Toast
 
 class MainActivity : Activity() {
 
-    private var resultLabel: TextView? = null
-    private var copyBtn: Button? = null
-    private var currentLink: String = ""
+    private var directLabel: TextView? = null
+    private var intentLabel: TextView? = null
+    private var copyDirectBtn: Button? = null
+    private var copyIntentBtn: Button? = null
+    private var directLink: String = ""
+    private var intentLink: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,18 +78,41 @@ class MainActivity : Activity() {
         val genBtn = Button(this).apply { text = "تأكيد" }
         root.addView(genBtn)
 
-        resultLabel = TextView(this).apply {
+        root.addView(TextView(this).apply {
+            text = "رابط قابل للنقر (شاركه كـ <a href>):"
             textSize = 12f
-            setPadding(0, 32, 0, 0)
+            setPadding(0, 32, 0, 4)
+        })
+
+        directLabel = TextView(this).apply {
+            textSize = 12f
             setTextIsSelectable(true)
         }
-        root.addView(resultLabel)
+        root.addView(directLabel)
 
-        copyBtn = Button(this).apply {
-            text = "نسخ الرابط"
+        copyDirectBtn = Button(this).apply {
+            text = "نسخ رابط <a href>"
             visibility = View.GONE
         }
-        root.addView(copyBtn)
+        root.addView(copyDirectBtn)
+
+        root.addView(TextView(this).apply {
+            text = "رابط للصق في شريط عناوين Chrome:"
+            textSize = 12f
+            setPadding(0, 32, 0, 4)
+        })
+
+        intentLabel = TextView(this).apply {
+            textSize = 12f
+            setTextIsSelectable(true)
+        }
+        root.addView(intentLabel)
+
+        copyIntentBtn = Button(this).apply {
+            text = "نسخ رابط intent://"
+            visibility = View.GONE
+        }
+        root.addView(copyIntentBtn)
 
         genBtn.setOnClickListener {
             val url = urlInput.text.toString().trim()
@@ -98,16 +124,25 @@ class MainActivity : Activity() {
             }
             val u64 = encodeB64(url)
             val m64 = encodeB64(msg)
-            currentLink = "popgen://open?c=$count&m=$m64&u=$u64"
-            resultLabel?.text = currentLink
-            copyBtn?.visibility = View.VISIBLE
+            val query = "open?c=$count&m=$m64&u=$u64"
+
+            directLink = "popgen://$query"
+            intentLink = "intent://$query#Intent;scheme=popgen;package=com.pop.fox;end"
+
+            directLabel?.text = directLink
+            intentLabel?.text = intentLink
+            copyDirectBtn?.visibility = View.VISIBLE
+            copyIntentBtn?.visibility = View.VISIBLE
         }
 
-        copyBtn?.setOnClickListener {
-            val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            cm.setPrimaryClip(ClipData.newPlainText("link", currentLink))
-            Toast.makeText(this, "تم النسخ", Toast.LENGTH_SHORT).show()
-        }
+        copyDirectBtn?.setOnClickListener { copy(directLink, "تم نسخ <a href>") }
+        copyIntentBtn?.setOnClickListener { copy(intentLink, "تم نسخ intent://") }
+    }
+
+    private fun copy(text: String, msg: String) {
+        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        cm.setPrimaryClip(ClipData.newPlainText("link", text))
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 
     private fun encodeB64(s: String): String =
